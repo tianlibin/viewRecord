@@ -19,6 +19,19 @@
 
 @implementation VideoViewController
 
+- (void)dealloc
+{
+    self.captureSession = nil;
+    self.assetWriter = nil;
+    self.assetWriterInput = nil;
+    self.videoOutput = nil;
+    self.outputMovURL = nil;
+    self.outputMp4URL = nil;
+    self.previewView = nil;
+    
+    [super dealloc];
+}
+
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
@@ -319,14 +332,16 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
 	
     // initialized a new input for video to receive sample buffers for writing
     // passing nil for outputSettings instructs the input to pass through appended samples, doing no processing before they are written
+    // 下面这个参数，设置图像质量，数字越大，质量越好
     NSDictionary *videoCompressionProps = [NSDictionary dictionaryWithObjectsAndKeys:
                                            [NSNumber numberWithDouble:512*1024.0], AVVideoAverageBitRateKey,
                                            nil ];
+    // 设置编码和宽高比。宽高比最好和摄像比例一致，否则图片可能被压缩或拉伸
     NSDictionary* dic = [NSDictionary dictionaryWithObjectsAndKeys:AVVideoCodecH264, AVVideoCodecKey,
                          [NSNumber numberWithFloat:320.0f], AVVideoWidthKey,
                          [NSNumber numberWithFloat:240.0f], AVVideoHeightKey,
                          videoCompressionProps, AVVideoCompressionPropertiesKey, nil];
-	self.assetWriterInput = [[AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:dic] retain];
+	self.assetWriterInput = [AVAssetWriterInput assetWriterInputWithMediaType:AVMediaTypeVideo outputSettings:dic];
 	[self.assetWriterInput setExpectsMediaDataInRealTime:YES];
 	if ([self.assetWriter canAddInput:self.assetWriterInput])
 		[self.assetWriter addInput:self.assetWriterInput];

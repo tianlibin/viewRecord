@@ -11,16 +11,7 @@
 
 
 @interface VideoViewController : UIViewController<AVCaptureVideoDataOutputSampleBufferDelegate>
-//{
-//	CMTime frameDuration;
-//	CMTime nextPTS;
-//	AVAssetWriter *assetWriter;
-//	AVAssetWriterInput *assetWriterInput;
-//	AVCaptureStillImageOutput *stillImageOutput;
-//    AVCaptureVideoDataOutput* videoOutput;
-//	NSURL *outputURL;
-//    NSURL* mp4URL;
-//}
+
 
 @property (nonatomic, assign) BOOL started;
 @property (nonatomic, assign) CMTime frameDuration;
