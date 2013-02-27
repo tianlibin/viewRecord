@@ -25,5 +25,5 @@
 @property (nonatomic, retain) NSURL* outputMp4URL;
 
 @property (nonatomic, retain) UIView *previewView;
-
+@property (nonatomic, retain) UIProgressView* progressBar;
 @end

@@ -28,6 +28,7 @@
     self.outputMovURL = nil;
     self.outputMp4URL = nil;
     self.previewView = nil;
+    self.progressBar = nil;
     
     [super dealloc];
 }
@@ -53,9 +54,20 @@
     self.outputMovURL = [NSURL fileURLWithPath:[[self docDir] stringByAppendingPathComponent:@"v.mov"]];
     self.outputMp4URL = [NSURL fileURLWithPath:[[self docDir] stringByAppendingPathComponent:@"v.mp4"]];
 
+    [self deleteFile:self.outputMovURL];
+    [self deleteFile:self.outputMp4URL];
+    
     [self setupAVCapture];
     [self setupPreview];
     [self setupButtons];
+    [self setupProgressBar];
+}
+
+- (void)setupProgressBar
+{
+    self.progressBar = [[[UIProgressView alloc] initWithProgressViewStyle:UIProgressViewStyleDefault] autorelease];
+    self.progressBar.frame = CGRectMake(0.0f, 0.0f, self.view.frame.size.width, 10.0f);
+    [self.view addSubview:self.progressBar];
 }
 
 - (void)setupPreview
@@ -225,7 +237,8 @@
         [vc release];
     }
     else {
-        [self showAlert:@"文件不存在"];
+//        [self showAlert:@"文件不存在"];
+        [self convertToMp4];
     }
     
     [fm release];
@@ -233,7 +246,7 @@
 
 - (void)convertToMp4
 {
-    NSString* _mp4Quality = AVAssetExportPresetLowQuality;
+    NSString* _mp4Quality = AVAssetExportPresetMediumQuality;
     
     // 试图删除原mp4
     [self deleteFile:self.outputMp4URL];
@@ -273,12 +286,16 @@
                     break;
             }
         }];
-        [exportSession release];
     }
     else
     {
         [self showAlert:@"AVAsset doesn't support mp4 quality"];
     }
+}
+
+- (void)convertFinish
+{
+    [self showAlert:@"convert OK"];
 }
 
 #pragma mark - capture method
@@ -426,6 +443,11 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
         CFRelease(sbufWithNewTiming);
         
         self.currentFrame++;
+        dispatch_async(dispatch_get_main_queue(), ^{
+            CGFloat p = (CGFloat)((CGFloat)self.currentFrame / (CGFloat)self.maxFrame);
+            [self.progressBar setProgress:p animated:YES];
+        });
+        
         if (self.currentFrame >= self.maxFrame) {
             [self performSelectorOnMainThread:@selector(stopedForce) withObject:nil waitUntilDone:YES];
         }
