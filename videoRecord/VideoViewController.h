@@ -6,12 +6,20 @@
 //  Copyright (c) 2013年 田立彬. All rights reserved.
 //
 
+
+//
+// 使用AVCaptureSession录制
+//
+
 #import <UIKit/UIKit.h>
 #import <AVFoundation/AVFoundation.h>
 
 
 @interface VideoViewController : UIViewController<AVCaptureVideoDataOutputSampleBufferDelegate>
-
+//{
+//    dispatch_semaphore_t frameRenderingSemaphore;
+//
+//}
 
 @property (nonatomic, assign) BOOL started;
 @property (nonatomic, assign) CMTime frameDuration;

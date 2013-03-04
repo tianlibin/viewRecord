@@ -9,6 +9,9 @@
 #import "VideoViewController.h"
 #import "PlayViewController.h"
 
+//
+// 使用AVCaptureSession录制
+//
 
 @interface VideoViewController ()
 
@@ -21,6 +24,11 @@
 
 - (void)dealloc
 {
+//    if (frameRenderingSemaphore != NULL)
+//    {
+//        dispatch_release(frameRenderingSemaphore);
+//    }
+    [self.captureSession stopRunning];
     self.captureSession = nil;
     self.assetWriter = nil;
     self.assetWriterInput = nil;
@@ -38,6 +46,7 @@
     self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
     if (self) {
         // Custom initialization
+//        frameRenderingSemaphore = dispatch_semaphore_create(1);
     }
     return self;
 }
@@ -165,6 +174,18 @@
     [button addTarget:self action:@selector(playmp4:) forControlEvents:UIControlEventTouchUpInside];
     [self.view addSubview:button];
     
+    f.origin.x += (w + 5);
+    button = [UIButton buttonWithType:UIButtonTypeRoundedRect];
+    button.frame = f;
+    [button setTitle:@"back" forState:UIControlStateNormal];
+    [button addTarget:self action:@selector(back:) forControlEvents:UIControlEventTouchUpInside];
+    [self.view addSubview:button];
+    
+}
+
+- (void)back:(id)sender
+{
+    [self dismissModalViewControllerAnimated:YES];
 }
 
 - (void)start:(id)sender
@@ -180,6 +201,7 @@
         if (self.currentFrame == 0) {
             // 试图删一下原誩件
             [self deleteFile:self.outputMovURL];
+            [self deleteFile:self.outputMp4URL];
         }
         [button setTitle:@"pause" forState:UIControlStateNormal];
         self.started = YES;
@@ -398,6 +420,18 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
 // Delegate routine that is called when a sample buffer was written
 - (void)captureOutput:(AVCaptureOutput *)captureOutput didOutputSampleBuffer:(CMSampleBufferRef)sampleBuffer fromConnection:(AVCaptureConnection *)connection
 {
+//    if (dispatch_semaphore_wait(frameRenderingSemaphore, DISPATCH_TIME_NOW) == 0) {
+//        CFRetain(sampleBuffer);
+////        runAsynchronouslyOnVideoProcessingQueue(^{
+//        
+//            [self processVideoSampleBuffer:sampleBuffer];
+//            
+//            CFRelease(sampleBuffer);
+//            dispatch_semaphore_signal(frameRenderingSemaphore);
+////        });
+//    }
+//    
+
     if (self.started) {
         // set up the AVAssetWriter using the format description from the first sample buffer captured
         if ( self.assetWriter == nil ) {
@@ -454,9 +488,237 @@ static CGFloat DegreesToRadians(CGFloat degrees) {return degrees * M_PI / 180;};
     }
 }
 
+- (UIImage *) imageFromSampleBuffer:(CMSampleBufferRef) sampleBuffer
+{
+    CVImageBufferRef imageBuffer = CMSampleBufferGetImageBuffer(sampleBuffer);
+    // Lock the base address of the pixel buffer
+    CVPixelBufferLockBaseAddress(imageBuffer,0);
+    
+    // Get the number of bytes per row for the pixel buffer
+    size_t bytesPerRow = CVPixelBufferGetBytesPerRow(imageBuffer);
+    // Get the pixel buffer width and height
+    size_t width = CVPixelBufferGetWidth(imageBuffer);
+    size_t height = CVPixelBufferGetHeight(imageBuffer);
+    
+    // Create a device-dependent RGB color space
+    CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+    if (!colorSpace)
+    {
+        NSLog(@"CGColorSpaceCreateDeviceRGB failure");
+        return nil;
+    }
+    
+    // Get the base address of the pixel buffer
+    void *baseAddress = CVPixelBufferGetBaseAddress(imageBuffer);
+    // Get the data size for contiguous planes of the pixel buffer.
+    size_t bufferSize = CVPixelBufferGetDataSize(imageBuffer);
+    
+    // Create a Quartz direct-access data provider that uses data we supply
+    CGDataProviderRef provider = CGDataProviderCreateWithData(NULL, baseAddress, bufferSize,
+                                                              NULL);
+    // Create a bitmap image from data supplied by our data provider
+    CGImageRef cgImage =
+    CGImageCreate(width,
+                  height,
+                  8,
+                  32,
+                  bytesPerRow,
+                  colorSpace,
+                  kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little,
+                  provider,
+                  NULL,
+                  true,
+                  kCGRenderingIntentDefault);
+    CGDataProviderRelease(provider);
+    CGColorSpaceRelease(colorSpace);
+    
+    // Create and return an image object representing the specified Quartz image
+    UIImage *image = [UIImage imageWithCGImage:cgImage];
+    CGImageRelease(cgImage);
+    
+    CVPixelBufferUnlockBaseAddress(imageBuffer, 0);
+    
+    return image;
+}
+
 - (void)stopedForce
 {
     [self stop:nil];
     [self showAlert:@"stoped force"];    
 }
+//
+//- (void)processVideoSampleBuffer:(CMSampleBufferRef)sampleBuffer;
+//{
+//    if (capturePaused)
+//    {
+//        return;
+//    }
+//    
+//    CFAbsoluteTime startTime = CFAbsoluteTimeGetCurrent();
+//    CVImageBufferRef cameraFrame = CMSampleBufferGetImageBuffer(sampleBuffer);
+//    int bufferWidth = CVPixelBufferGetWidth(cameraFrame);
+//    int bufferHeight = CVPixelBufferGetHeight(cameraFrame);
+//    
+//	CMTime currentTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
+//    
+////    [GPUImageOpenGLESContext useImageProcessingContext];
+//    
+//    if (/*[GPUImageOpenGLESContext supportsFastTextureUpload]*/YES)
+//    {
+//        CVOpenGLESTextureRef luminanceTextureRef = NULL;
+//        CVOpenGLESTextureRef chrominanceTextureRef = NULL;
+//        CVOpenGLESTextureRef texture = NULL;
+//        
+//        //        if (captureAsYUV && [GPUImageOpenGLESContext deviceSupportsRedTextures])
+//        if (CVPixelBufferGetPlaneCount(cameraFrame) > 0) // Check for YUV planar inputs to do RGB conversion
+//        {
+//            
+////            if ( (imageBufferWidth != bufferWidth) && (imageBufferHeight != bufferHeight) )
+////            {
+////                imageBufferWidth = bufferWidth;
+////                imageBufferHeight = bufferHeight;
+////                
+////                [self destroyYUVConversionFBO];
+////                [self createYUVConversionFBO];
+////            }
+//            
+//            CVReturn err;
+//            // Y-plane
+//            glActiveTexture(GL_TEXTURE4);
+//            if ([GPUImageOpenGLESContext deviceSupportsRedTextures])
+//            {
+//                //                err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, coreVideoTextureCache, cameraFrame, NULL, GL_TEXTURE_2D, GL_RED_EXT, bufferWidth, bufferHeight, GL_RED_EXT, GL_UNSIGNED_BYTE, 0, &luminanceTextureRef);
+//                err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, coreVideoTextureCache, cameraFrame, NULL, GL_TEXTURE_2D, GL_LUMINANCE, bufferWidth, bufferHeight, GL_LUMINANCE, GL_UNSIGNED_BYTE, 0, &luminanceTextureRef);
+//            }
+//            else
+//            {
+//                err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, coreVideoTextureCache, cameraFrame, NULL, GL_TEXTURE_2D, GL_LUMINANCE, bufferWidth, bufferHeight, GL_LUMINANCE, GL_UNSIGNED_BYTE, 0, &luminanceTextureRef);
+//            }
+//            if (err)
+//            {
+//                NSLog(@"Error at CVOpenGLESTextureCacheCreateTextureFromImage %d", err);
+//            }
+//            
+//            luminanceTexture = CVOpenGLESTextureGetName(luminanceTextureRef);
+//            glBindTexture(GL_TEXTURE_2D, luminanceTexture);
+//            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//            
+//            // UV-plane
+//            glActiveTexture(GL_TEXTURE5);
+//            if ([GPUImageOpenGLESContext deviceSupportsRedTextures])
+//            {
+//                //                err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, coreVideoTextureCache, cameraFrame, NULL, GL_TEXTURE_2D, GL_RG_EXT, bufferWidth/2, bufferHeight/2, GL_RG_EXT, GL_UNSIGNED_BYTE, 1, &chrominanceTextureRef);
+//                err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, coreVideoTextureCache, cameraFrame, NULL, GL_TEXTURE_2D, GL_LUMINANCE_ALPHA, bufferWidth/2, bufferHeight/2, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, 1, &chrominanceTextureRef);
+//            }
+//            else
+//            {
+//                err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, coreVideoTextureCache, cameraFrame, NULL, GL_TEXTURE_2D, GL_LUMINANCE_ALPHA, bufferWidth/2, bufferHeight/2, GL_LUMINANCE_ALPHA, GL_UNSIGNED_BYTE, 1, &chrominanceTextureRef);
+//            }
+//            if (err)
+//            {
+//                NSLog(@"Error at CVOpenGLESTextureCacheCreateTextureFromImage %d", err);
+//            }
+//            
+//            chrominanceTexture = CVOpenGLESTextureGetName(chrominanceTextureRef);
+//            glBindTexture(GL_TEXTURE_2D, chrominanceTexture);
+//            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//            glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//            
+//            if (!allTargetsWantMonochromeData)
+//            {
+//                [self convertYUVToRGBOutput];
+//            }
+//            
+//            [self updateTargetsForVideoCameraUsingCacheTextureAtWidth:bufferWidth height:bufferHeight time:currentTime];
+//            
+//            CVPixelBufferUnlockBaseAddress(cameraFrame, 0);
+//            CVOpenGLESTextureCacheFlush(coreVideoTextureCache, 0);
+//            CFRelease(luminanceTextureRef);
+//            CFRelease(chrominanceTextureRef);
+//        }
+//        else
+//        {
+//            CVPixelBufferLockBaseAddress(cameraFrame, 0);
+//            
+//            CVReturn err = CVOpenGLESTextureCacheCreateTextureFromImage(kCFAllocatorDefault, coreVideoTextureCache, cameraFrame, NULL, GL_TEXTURE_2D, GL_RGBA, bufferWidth, bufferHeight, GL_BGRA, GL_UNSIGNED_BYTE, 0, &texture);
+//            
+//            if (!texture || err) {
+//                NSLog(@"Camera CVOpenGLESTextureCacheCreateTextureFromImage failed (error: %d)", err);
+//                NSAssert(NO, @"Camera failure");
+//                return;
+//            }
+//            
+//            outputTexture = CVOpenGLESTextureGetName(texture);
+//            //        glBindTexture(CVOpenGLESTextureGetTarget(texture), outputTexture);
+//            glBindTexture(GL_TEXTURE_2D, outputTexture);
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+//            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+//            
+//            [self updateTargetsForVideoCameraUsingCacheTextureAtWidth:bufferWidth height:bufferHeight time:currentTime];
+//            
+//            CVPixelBufferUnlockBaseAddress(cameraFrame, 0);
+//            CVOpenGLESTextureCacheFlush(coreVideoTextureCache, 0);
+//            CFRelease(texture);
+//            
+//            outputTexture = 0;
+//        }
+//        
+//        
+//        if (_runBenchmark)
+//        {
+//            numberOfFramesCaptured++;
+//            if (numberOfFramesCaptured > INITIALFRAMESTOIGNOREFORBENCHMARK)
+//            {
+//                CFAbsoluteTime currentFrameTime = (CFAbsoluteTimeGetCurrent() - startTime);
+//                totalFrameTimeDuringCapture += currentFrameTime;
+//                NSLog(@"Average frame time : %f ms", [self averageFrameDurationDuringCapture]);
+//                NSLog(@"Current frame time : %f ms", 1000.0 * currentFrameTime);
+//            }
+//        }
+//    }
+//    else
+//    {
+//        CVPixelBufferLockBaseAddress(cameraFrame, 0);
+//        
+//        glBindTexture(GL_TEXTURE_2D, outputTexture);
+//        
+//        //        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bufferWidth, bufferHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, CVPixelBufferGetBaseAddress(cameraFrame));
+//        
+//        // Using BGRA extension to pull in video frame data directly
+//        // The use of bytesPerRow / 4 accounts for a display glitch present in preview video frames when using the photo preset on the camera
+//        size_t bytesPerRow = CVPixelBufferGetBytesPerRow(cameraFrame);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, bytesPerRow / 4, bufferHeight, 0, GL_BGRA, GL_UNSIGNED_BYTE, CVPixelBufferGetBaseAddress(cameraFrame));
+//        
+//        for (id<GPUImageInput> currentTarget in targets)
+//        {
+//            if ([currentTarget enabled])
+//            {
+//                if (currentTarget != self.targetToIgnoreForUpdates)
+//                {
+//                    NSInteger indexOfObject = [targets indexOfObject:currentTarget];
+//                    NSInteger textureIndexOfTarget = [[targetTextureIndices objectAtIndex:indexOfObject] integerValue];
+//                    
+//                    [currentTarget setInputSize:CGSizeMake(bufferWidth, bufferHeight) atIndex:textureIndexOfTarget];
+//                    [currentTarget newFrameReadyAtTime:currentTime atIndex:textureIndexOfTarget];
+//                }
+//            }
+//        }
+//        
+//        CVPixelBufferUnlockBaseAddress(cameraFrame, 0);
+//        
+//        if (_runBenchmark)
+//        {
+//            numberOfFramesCaptured++;
+//            if (numberOfFramesCaptured > INITIALFRAMESTOIGNOREFORBENCHMARK)
+//            {
+//                CFAbsoluteTime currentFrameTime = (CFAbsoluteTimeGetCurrent() - startTime);
+//                totalFrameTimeDuringCapture += currentFrameTime;
+//            }
+//        }
+//    }  
+//}
+
 @end

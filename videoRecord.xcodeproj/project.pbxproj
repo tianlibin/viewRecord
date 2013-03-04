@@ -20,6 +20,7 @@
 		764D2EC516D7793F001BD006 /* AVFoundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 764D2EC416D7793F001BD006 /* AVFoundation.framework */; };
 		764D2EC716D7794C001BD006 /* CoreMedia.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 764D2EC616D7794C001BD006 /* CoreMedia.framework */; };
 		764D2EC916D77953001BD006 /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 764D2EC816D77953001BD006 /* AssetsLibrary.framework */; };
+		7660D6EE16E44A930011C8FC /* MainViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7660D6ED16E44A930011C8FC /* MainViewController.m */; };
 		7665E7B016DC5A0400B4F472 /* PlayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 7665E7AF16DC5A0400B4F472 /* PlayViewController.m */; };
 		7665E7B416DC5E8700B4F472 /* MediaPlayer.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7665E7B316DC5E8700B4F472 /* MediaPlayer.framework */; };
 		7665E7B616DC8ADB00B4F472 /* CoreVideo.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7665E7B516DC8ADB00B4F472 /* CoreVideo.framework */; };
@@ -44,6 +45,8 @@
 		764D2EC416D7793F001BD006 /* AVFoundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AVFoundation.framework; path = System/Library/Frameworks/AVFoundation.framework; sourceTree = SDKROOT; };
 		764D2EC616D7794C001BD006 /* CoreMedia.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreMedia.framework; path = System/Library/Frameworks/CoreMedia.framework; sourceTree = SDKROOT; };
 		764D2EC816D77953001BD006 /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = System/Library/Frameworks/AssetsLibrary.framework; sourceTree = SDKROOT; };
+		7660D6EC16E44A930011C8FC /* MainViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MainViewController.h; sourceTree = "<group>"; };
+		7660D6ED16E44A930011C8FC /* MainViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MainViewController.m; sourceTree = "<group>"; };
 		7665E7AE16DC5A0400B4F472 /* PlayViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlayViewController.h; sourceTree = "<group>"; };
 		7665E7AF16DC5A0400B4F472 /* PlayViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlayViewController.m; sourceTree = "<group>"; };
 		7665E7B316DC5E8700B4F472 /* MediaPlayer.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = MediaPlayer.framework; path = System/Library/Frameworks/MediaPlayer.framework; sourceTree = SDKROOT; };
@@ -111,6 +114,8 @@
 				764D2EA516D75C03001BD006 /* Supporting Files */,
 				764D2EC116D76670001BD006 /* VideoViewController.h */,
 				764D2EC216D76670001BD006 /* VideoViewController.m */,
+				7660D6EC16E44A930011C8FC /* MainViewController.h */,
+				7660D6ED16E44A930011C8FC /* MainViewController.m */,
 			);
 			path = videoRecord;
 			sourceTree = "<group>";
@@ -198,6 +203,7 @@
 				764D2EAF16D75C03001BD006 /* AppDelegate.m in Sources */,
 				764D2EC316D76670001BD006 /* VideoViewController.m in Sources */,
 				7665E7B016DC5A0400B4F472 /* PlayViewController.m in Sources */,
+				7660D6EE16E44A930011C8FC /* MainViewController.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -275,6 +281,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "videoRecord/videoRecord-Prefix.pch";
 				INFOPLIST_FILE = "videoRecord/videoRecord-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -286,6 +293,7 @@
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "videoRecord/videoRecord-Prefix.pch";
 				INFOPLIST_FILE = "videoRecord/videoRecord-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
