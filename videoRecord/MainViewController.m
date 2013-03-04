@@ -72,6 +72,7 @@
 - (void)recordPicker:(id)sender
 {
     if (![UIImagePickerController isSourceTypeAvailable:UIImagePickerControllerSourceTypeCamera]) {
+        // 检测设备是否支持录像。
         UIAlertView* alert = [[UIAlertView alloc] initWithTitle:@""
                                                         message:@"设备无摄象头"
                                                        delegate:nil
@@ -82,10 +83,13 @@
         return;
     }
     UIImagePickerController* pickerView = [[UIImagePickerController alloc] init];
+    // 设置摄像头为输入源，而非相册
     pickerView.sourceType = UIImagePickerControllerSourceTypeCamera;
+    // 确定摄像，非照像。
     NSArray* availableMedia = [UIImagePickerController availableMediaTypesForSourceType:UIImagePickerControllerSourceTypeCamera];
     pickerView.mediaTypes = [NSArray arrayWithObject:availableMedia[1]];
     [self presentModalViewController:pickerView animated:YES];
+    // 设置最大录像时间
     pickerView.videoMaximumDuration = 30;
     pickerView.delegate = self;
     [pickerView release];
@@ -94,11 +98,14 @@
 #pragma mark - UIImagePickerControllerDelegate
 - (void)imagePickerController:(UIImagePickerController *)picker didFinishPickingMediaWithInfo:(NSDictionary *)info
 {
+    // 这里仅做演示，未做实际逻辑处理
+    // 具体的摄像数据，可以从info中读取 例如：文件url = [info objectForKey:UIImagePickerControllerMediaURL];
     [self dismissModalViewControllerAnimated:YES];
 }
 
 - (void)imagePickerControllerDidCancel:(UIImagePickerController *)picker
 {
+    // 这里仅做演示，未做实际逻辑处理
     [picker dismissModalViewControllerAnimated:YES];
 }
 
